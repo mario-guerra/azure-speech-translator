@@ -97,7 +97,8 @@ def on_recognized(recognition_args, in_lang, out_lang):
         with open(cmd_line_args.transcription, 'a', encoding='utf-8') as f:
             f.write(f"{source_text}\n")
 
-    # Translate the source text to the specified output language
+    # Translate the source text to the specified output language using the 
+    # Translator service REST API endpoint
     headers = {
         'Ocp-Apim-Subscription-Key': translator_key,
         'Ocp-Apim-Subscription-Region': 'eastus',
