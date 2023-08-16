@@ -130,9 +130,6 @@ def on_session_stopped(args):
 # Find all matching audio files
 input_audio_files = glob.glob(cmd_line_args.input_audio_pattern)
 
-# Initialize the translations list
-translations = []
-
 # Process each audio file in sequence
 for input_audio_file in input_audio_files:
     print(f"Processing audio file: {input_audio_file}")
