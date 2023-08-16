@@ -34,7 +34,7 @@ Replace `<your_speech_service_key>`, `<your_speech_service_region>`, `<your_tran
 Run the script with the following command:
 
 ```bash
-python audio_translation.py --in-lang <input_language> --out-lang <output_language> <input_audio_pattern> <output_file> [--transcription <transcription_output_file>]
+python azure_translator.py --in-lang <input_language> --out-lang <output_language> <input_audio_pattern> <output_file> [--transcription <transcription_output_file>]
 ```
 
 - `<input_language>`: The input language (e.g., english, spanish, estonian, french, italian, german)
