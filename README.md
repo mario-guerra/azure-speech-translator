@@ -38,11 +38,11 @@ Run the script with the following command:
 python azure_translator.py --in-lang <input_language> --out-lang <output_language> <input_audio_pattern> <output_file> [--transcription <transcription_output_file>]
 ```
 
-- `<input_language>`: The input language (e.g., english, spanish, estonian, french, italian, german)
-- `<output_language>`: The output language (e.g., english, spanish, estonian, french, italian, german)
-- `<input_audio_pattern>`: The path to the input audio files with a wildcard pattern (e.g., ./*.wav)
-- `<output_file>`: The path to the output file containing the translations
-- `<transcription_output_file>` (optional): The path to the output file containing the transcriptions
+- `<input_language>`: Input language (e.g., english, spanish, estonian, french, italian, german)
+- `<output_language>`: Output language (e.g., english, spanish, estonian, french, italian, german)
+- `<input_audio_pattern>`: Path to the input audio file(s), with support for wildcard patterns (e.g., ./*.wav)
+- `<output_file>`: Path to the output file containing the translation
+- `<transcription_output_file>` (optional): Path to the output file containing the transcription
 
 Example:
 
