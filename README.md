@@ -6,6 +6,7 @@ This script uses Azure Cognitive Services to transcribe and translate audio file
 
 - Python 3.6 or higher
 - Azure Cognitive Services Speech SDK
+- Azure Speech Service
 - Azure Translator Service
 
 ## Installation
