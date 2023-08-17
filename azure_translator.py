@@ -23,10 +23,12 @@ import sys
 import argparse
 import glob
 from dotenv import load_dotenv
-import azure.cognitiveservices.speech as speechsdk
 from requests import post
-import uuid
 import time
+import azure.cognitiveservices.speech as speechsdk
+from azure.ai.translation.text import TextTranslationClient, TranslatorCredential
+from azure.ai.translation.text.models import InputTextItem
+from azure.core.exceptions import HttpResponseError
 
 # Set up argument parser
 parser = argparse.ArgumentParser(description="Translates audio files using Azure Cognitive Services.")
@@ -46,6 +48,8 @@ speech_key = os.getenv("AZURE_SPEECH_KEY")
 service_region = os.getenv("AZURE_SERVICE_REGION")
 translator_key = os.getenv("AZURE_TRANSLATOR_KEY")
 translator_endpoint = os.getenv("AZURE_TRANSLATOR_ENDPOINT")
+credential = TranslatorCredential(translator_key, service_region)
+text_translator = TextTranslationClient(endpoint=translator_endpoint, credential=credential)
 
 # See https://docs.microsoft.com/azure/cognitive-services/speech-service/language-support#speech-to-text
 # for a list of supported languages for Speech Service
@@ -83,11 +87,11 @@ speech_recognition_language = language_codes[cmd_line_args.in_lang]
 # See https://learn.microsoft.com/dotnet/api/microsoft.cognitiveservices.speech.propertyid
 speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
 speech_config.speech_recognition_language = speech_recognition_language
-speech_config.set_property(speechsdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "15000")
+speech_config.set_property(speechsdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "10000")
 speech_config.set_property(speechsdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, "10000")
 speech_config.set_property(speechsdk.PropertyId.Speech_SegmentationSilenceTimeoutMs, "5000")
 
-# Define the event handlers
+# Event handler triggered when speech is recognized and transcribed. Translation to target language happens here.
 def on_recognized(recognition_args, in_lang, out_lang):
     source_text = recognition_args.result.text
     print(f"Transcribed text: {source_text}")
@@ -97,31 +101,26 @@ def on_recognized(recognition_args, in_lang, out_lang):
         with open(cmd_line_args.transcription, 'a', encoding='utf-8') as f:
             f.write(f"{source_text}\n")
 
-    # Translate the source text to the specified output language using the 
-    # Translator service REST API endpoint
-    headers = {
-        'Ocp-Apim-Subscription-Key': translator_key,
-        'Ocp-Apim-Subscription-Region': 'eastus',
-        'Content-type': 'application/json',
-        'X-ClientTraceId': str(uuid.uuid4())
-    }
-    body = [{'text': source_text}]
-    params = {
-        'api-version': '3.0',
-        'from': translator_language_codes[in_lang],
-        'to': translator_language_codes[out_lang]
-    }
-    translate_api_path = "translate"
-    api_version = "3.0"
-    full_translator_endpoint = f"{translator_endpoint}/{translate_api_path}?api-version={api_version}"
-    response = post(full_translator_endpoint, headers=headers, json=body, params=params)
-    
-    translation = response.json()[0]['translations'][0]['text']
-    print(f"Translated text: {translation}")
+    # Translate the transcribed text using the Azure Translator SDK
+    # Adapted from this sample code:
+    # https://github.com/Azure/azure-sdk-for-python/blob/f03378e258a70395ac80260565ef971b49c57b09/sdk/translation/azure-ai-translation-text/samples/Sample2_Translate.md
+    try:
+        source_language = translator_language_codes[in_lang]
+        target_languages = [translator_language_codes[out_lang]]
+        input_text_elements = [ InputTextItem(text = source_text) ]
+        response = text_translator.translate(content = input_text_elements, to = target_languages, from_parameter = source_language)
+        translation = response[0] if response else None
 
-    # Write the translated text to the output file
-    with open(cmd_line_args.output_file, 'a', encoding='utf-8') as f:
-        f.write(f"{translation}\n")
+        if translation:
+            for translated_text in translation.translations:
+                print(f"Translated text: {translated_text.text}")
+                # Write the translated text to the output file
+                with open(cmd_line_args.output_file, 'a', encoding='utf-8') as f:
+                    f.write(f"{translation}\n")
+
+    except HttpResponseError as exception:
+        print(f"Error Code: {exception.error.code}")
+        print(f"Message: {exception.error.message}")
 
 def on_session_stopped(args):
     print("Continuous speech recognition session stopped.")
@@ -139,11 +138,11 @@ for input_audio_file in input_audio_files:
     with open(input_audio_file, "rb") as f:
         audio_data = f.read()
 
-    # Transcribe the audio data
+    # Set the transcriber for the audio data
     audio_input = speechsdk.audio.AudioConfig(filename=input_audio_file)
     speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_input)
 
-    # Start continuous recognition and handle events
+    # Start continuous speech recognition and register event handlers
     session_stopped = False
     speech_recognizer.recognized.connect(lambda recognition_args: on_recognized(recognition_args, cmd_line_args.in_lang, cmd_line_args.out_lang))
     speech_recognizer.session_stopped.connect(on_session_stopped)
