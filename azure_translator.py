@@ -116,7 +116,7 @@ def on_recognized(recognition_args, in_lang, out_lang):
                 print(f"Translated text: {translated_text.text}")
                 # Write the translated text to the output file
                 with open(cmd_line_args.output_file, 'a', encoding='utf-8') as f:
-                    f.write(f"{translation}\n")
+                    f.write(f"{translated_text.text}\n")
 
     except HttpResponseError as exception:
         print(f"Error Code: {exception.error.code}")
