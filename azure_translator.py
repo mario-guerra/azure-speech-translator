@@ -106,6 +106,8 @@ def on_recognized(recognition_args, in_lang, out_lang):
     # https://github.com/Azure/azure-sdk-for-python/blob/f03378e258a70395ac80260565ef971b49c57b09/sdk/translation/azure-ai-translation-text/samples/Sample2_Translate.md
     try:
         source_language = translator_language_codes[in_lang]
+        # Translator service supports translation to multiple languages in one pass,
+        # so it expects a bracketed list even when translating to only one language.
         target_languages = [translator_language_codes[out_lang]]
         input_text_elements = [ InputTextItem(text = source_text) ]
         response = text_translator.translate(content = input_text_elements, to = target_languages, from_parameter = source_language)
