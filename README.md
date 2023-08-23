@@ -1,4 +1,4 @@
-# Audio Translation Script
+# Azure Speech Translation Script
 
 This Python script uses Azure Cognitive Services to transcribe and translate audio files into different languages. It takes input audio files, transcribes them using the Azure Speech Service SDK, and translates the transcriptions into the desired output language using the Azure Translator Service SDK. The Translator Service SDK is currently in public preview, with GA date TBD. 
 
